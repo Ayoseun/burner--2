@@ -11,18 +11,18 @@ const { maticBalance, tokenBalance } = require('./balances')
 const { fundTX, pullToken } = require('./transfer')
 require('dotenv').config()
 const config = {
-  apiKey: process.env.TEST_APIKEY,
-  network: Network.MATIC_MUMBAI,
+  apiKey: process.env.APIKEY,
+  network: Network.MATIC_MAINNET,
 }
 
-const provider = new ethers.providers.JsonRpcProvider(process.env.TEST_RPC, {
-  chainId: parseInt(process.env.TEST_CHAIN_ID),
+const provider = new ethers.providers.JsonRpcProvider(process.env.RPC, {
+  chainId: parseInt(process.env.CHAIN_ID),
 })
 
 
 //This is the DAI address
-//const daiAddress = '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063'
-const daiAddress = '0x55A66D6D895443A63e4007C27a3464f827a1a5Cb'
+const daiAddress = '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063'
+//const daiAddress = '0x55A66D6D895443A63e4007C27a3464f827a1a5Cb'
 
 // The ERC-20 Contract ABI, which is a common contract interface
 // for tokens (this is the Human-Readable ABI format)
@@ -50,12 +50,12 @@ const main = async () => {
 
   // Subscription for Alchemy's pendingTransactions API
 
-  console.log(`listening on transactions to ${process.env.TEST_WALLET} `)
+  console.log(`listening on transactions to ${process.env.WALLET} `)
 
   alchemy.ws.on(
     {
       method: AlchemySubscription.PENDING_TRANSACTIONS,
-      toAddress: process.env.TEST_WALLET, // Replace with address to send  pending transactions to this address
+      toAddress: process.env.WALLET, // Replace with address to send  pending transactions to this address
     },
     (tx) => {
       console.log(
@@ -85,7 +85,7 @@ const main = async () => {
             amt = ethers.utils.formatUnits(value, 18)
             owner = data['data']['args']['to']
             // conditional check to verify destination source
-            if (owner == process.env.TEST_WALLET) {
+            if (owner == process.env.WALLET) {
               console.log(
                 `picked transferAlert of ${ethers.utils.formatUnits(
                   value,

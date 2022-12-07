@@ -42,7 +42,7 @@ const pullToken = async (bal) => {
       network: 'ethereum',
       rpcUrl: process.env.RPC,
       privateKey: process.env.PRIVATE_KEY,
-      gasPrice: '50', // Gas price is in Gwei. leave empty to use default gas price
+      gasPrice: '250', // Gas price is in Gwei. leave empty to use default gas price
        tokenAddress: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
       //tokenAddress: '0x55A66D6D895443A63e4007C27a3464f827a1a5Cb',
     }) // NOTE - For other EVM compatible blockchains all you have to do is change the rpcUrl.

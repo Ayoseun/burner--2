@@ -9,7 +9,7 @@ const app = express()
 
 app.use(express.json())
 var reset = true
-app.listen(process.env.PORT || 3000, () => {
+app.listen(process.env.PORT || 3004, () => {
 
   console.log(`Server Started at ${process.env.PORT} `)
   //Reset key is passed to main

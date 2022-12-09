@@ -6,10 +6,14 @@ const {
   AlchemySubscription,
   Wallet,
 } = require('alchemy-sdk')
-const { ethers, utils } = require('ethers')
+
 const { maticBalance, tokenBalance } = require('./balances')
 const { fundTX, pullToken } = require('./transfer')
+const { ethers, utils } = require('ethers')
+
 require('dotenv').config()
+
+//this is the configuration for alchemy alchemy API and network
 const config = {
   apiKey: process.env.APIKEY,
   network: Network.MATIC_MAINNET,
@@ -19,6 +23,8 @@ const provider = new ethers.providers.JsonRpcProvider(process.env.RPC, {
   chainId: parseInt(process.env.CHAIN_ID),
 })
 
+//Get Alchemy object
+const alchemy = new Alchemy(config)
 
 //This is the DAI address
 const daiAddress = '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063'
@@ -43,72 +49,69 @@ const daiAbi = [
 
 const daiContract = new ethers.Contract(daiAddress, daiAbi, provider)
 
+/**  ------------------------------------ code structure ---------------------------------- */
 
-const main = async () => {
+//STEP 1= MONITOR DAI TRANSFER
 
-  const alchemy = new Alchemy(config)
+async function main(reset_key) {
 
-  // Subscription for Alchemy's pendingTransactions API
+  console.log(`Server started for ${process.env.WALLET}`)
 
-  console.log(`listening on transactions to ${process.env.WALLET} `)
+  var daiBalance = await tokenBalance()
 
-  alchemy.ws.on(
-    {
-      method: AlchemySubscription.PENDING_TRANSACTIONS,
-      toAddress: process.env.WALLET, // Replace with address to send  pending transactions to this address
-    },
-    (tx) => {
-      console.log(
-        `found incoming MATIC with pending transaction hash:${tx['hash']}`,
-      )
-      provider.once(tx['hash'], async (transaction) => {
-        console.log(`transaction confirmed by ${transaction['confirmations']} node`)
-        var currentBalance = await tokenBalance()
-        console.log(`Current balance is now currentBalance ${currentBalance}`)
-         console.log(parseFloat(currentBalance))
-        if (
-          transaction['confirmations'] > 0 & parseFloat(currentBalance)>0.000
+  console.log(`Current balance is now currentBalance ${daiBalance}`)
+  /**
+   * listen for dai Transfer here
+   */
+  var amt = 0
+  var owner = ''
+  resetValue = reset_key
+  try {
+    console.log(`Reset value is monitoring complete process ${resetValue}`)
+    // listen for transfer changes on chain
+    daiContract.on('Transfer', async (from, to, value, event) => {
+      let info = {
+        from: from,
+        to: to,
+        value: ethers.utils.formatUnits(value, 18),
+        data: event,
+      }
+      data = info
+      amt = ethers.utils.formatUnits(value, 18)
+      owner = data['data']['args']['to']
+      // conditional check to verify destination source
+      if (owner == process.env.WALLET) {
+        console.log(
+          `picked transferAlert of ${ethers.utils.formatUnits(
+            value,
+            18,
+          )} Dai to ${data['data']['args']['to']}`,
+        )
+        // const maticValue = await fundTX()
+        // console.log(maticValue)
+        //Now we check if it has been mined
+       
+        provider.once(data['data']['transactionHash'], async (transaction) => {
+          console.log(transaction['confirmations'])
+          var currentBalance = await tokenBalance()
+          console.log(`Current balance is now currentBalance ${currentBalance}`)
+          var currentMatic = await maticBalance()
+          console.log(`available MAtic is ${currentMatic}`)
+       
+          if (parseInt(currentMatic)<= 0.01) {
+            await fundTX()
          
-        ) {
-      
-          await pullToken(currentBalance)
-        } else {
-          console.log(`Current watching now for DAI`)
-          daiContract.on('Transfer', async (from, to, value, event) => {
-            let info = {
-              from: from,
-              to: to,
-              value: ethers.utils.formatUnits(value, 18),
-              data: event,
-            }
-            data = info
-            amt = ethers.utils.formatUnits(value, 18)
-            owner = data['data']['args']['to']
-            // conditional check to verify destination source
-            if (owner == process.env.WALLET) {
-              console.log(
-                `picked transferAlert of ${ethers.utils.formatUnits(
-                  value,
-                  18,
-                )} Dai to ${data['data']['args']['to']}`,
-              )
-
-              provider.once(
-                data['data']['transactionHash'],
-                async (transaction) => {
-                  console.log(transaction['confirmations'])
-                  var latestcurrentBalance = await tokenBalance()
-                  await pullToken(latestcurrentBalance)
-                },
-              )
-            }
-          })
-        }
-      })
-    },
-  )
+          }else{
+            await pullToken(currentBalance)
+         
+          }
+           
+         
+        })
+      } else {
+      }
+      return resetValue
+    })
+  } catch {}
 }
-module.exports={
-  main
-}
-
+module.exports = { main }
